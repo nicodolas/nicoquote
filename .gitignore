@@ -1,6 +1,5 @@
 # Dependencies
 node_modules
-coverage
 # Environment variables
 .env
 .env.local
@@ -26,8 +25,7 @@ Thumbs.db
 *.log
 npm-debug.log*
 
-# Coverage
-coverage
+
 
 # Test
 *.tsbuildinfo
@@ -64,7 +62,7 @@ logs/
 *.log
 
 # Build artifacts (full match)
-coverage/
+coverage
 *.lcov.info
 *.clover.xml
 *.istanbul

@@ -1,8 +1,8 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { ZodSchema } from 'zod';
+import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
-export function validate(schema: ZodSchema) {
+export function validate(schema: z.ZodTypeAny) {
     return async (request: FastifyRequest, reply: FastifyReply) => {
         const result = schema.safeParse(request.body);
         if (!result.success) {
@@ -17,9 +17,7 @@ export function validate(schema: ZodSchema) {
     };
 }
 
-export function zodToJsonSchemaExport(schema: ZodSchema): Record<string, unknown> {
-    const convert = zodToJsonSchema as (schema: ZodSchema) => unknown;
-    const json = convert(schema) as Record<string, unknown>;
-    json.required = json.required || [];
-    return json;
+export function zodToJsonSchemaExport(schema: z.ZodTypeAny): Record<string, unknown> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (zodToJsonSchema as any)(schema);
 }
