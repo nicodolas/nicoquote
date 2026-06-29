@@ -57,7 +57,8 @@ src/
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | GET | `/api/quotes` | ❌ | List quotes with optional filtering |
-| GET | `/api/quotes/random` | ❌ | Get a random quote |
+| GET | `/api/quotes/random` | ❌ | Get a random quote (JSON) |
+| GET | `/api/quotes/random/image` | ❌ | Get a random quote as SVG image |
 | GET | `/api/quotes/:id` | ❌ | Get quote by ID |
 | POST | `/api/quotes` | ✅ | Create a new quote |
 | PUT | `/api/quotes/:id` | ✅ | Update a quote (full) |
@@ -70,6 +71,100 @@ src/
 - `author` - Filter by author (case-insensitive)
 - `tag` - Filter by tag
 - `limit` - Maximum number of results (default: 50)
+
+### Quote Image Endpoint — `/api/quotes/random/image`
+
+Returns a random quote rendered as an SVG image, with full Vietnamese Unicode support via Google Fonts. Perfect for GitHub READMEs.
+
+**Basic embed:**
+```markdown
+![Random Quote](https://your-domain.com/api/quotes/random/image)
+```
+
+**With custom styling:**
+```markdown
+![Random Quote](https://your-domain.com/api/quotes/random/image?theme=ocean&font=bevietnampro&width=700&fontSize=22)
+```
+
+#### Color Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `theme` | enum | `dark` | Preset theme — `dark` `light` `ocean` `rose` `forest` `sunset` `mono` |
+| `bg` | string | (theme) | Background color — hex without `#` or CSS name, e.g. `0d1117` |
+| `color` | string | (theme) | Quote text color — hex without `#` or CSS name |
+| `authorColor` | string | (accent) | Author name color — hex without `#` or CSS name |
+| `accent` | string | (theme) | Accent / left-border color — hex without `#` or CSS name |
+| `quoteMarkOpacity` | number 0–1 | `0.5` | Opacity of the decorative `"` quote mark |
+
+#### Typography Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `font` | enum | `bevietnampro` | Google Font preset (see table below) |
+| `fontSize` | integer 12–60 | `20` | Quote content font size in pixels |
+| `authorSize` | integer 10–48 | `fontSize × 0.82` | Author name font size in pixels |
+| `italic` | boolean | `true` | Render quote in italic |
+| `boldAuthor` | boolean | `true` | Render author name in bold |
+| `letterSpacing` | number -0.05–0.2 | `0.01` | Letter spacing in `em` units |
+
+#### Layout Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `width` | integer 300–1200 | `800` | Image width in pixels |
+| `radius` | integer 0–40 | `12` | Card border radius in pixels |
+| `padding` | integer 16–80 | `40` | Inner padding in pixels |
+| `borderWidth` | integer 0–12 | `4` | Left accent bar width. Set `0` to hide |
+| `showQuoteIcon` | boolean | `true` | Show decorative `"` opening quote mark |
+
+#### Available Themes
+
+| Theme | Background | Text | Accent |
+|-------|-----------|------|--------|
+| `dark` *(default)* | `#0d1117` | `#e6edf3` | Indigo |
+| `light` | `#ffffff` | `#1f2937` | Indigo |
+| `ocean` | `#0f172a` | `#bae6fd` | Sky blue |
+| `rose` | `#1c1917` | `#fce7f3` | Pink |
+| `forest` | `#052e16` | `#d1fae5` | Emerald |
+| `sunset` | `#1c0a00` | `#fef3c7` | Orange |
+| `mono` | `#18181b` | `#d4d4d8` | Zinc |
+
+#### Available Fonts (Google Fonts — full Vietnamese support)
+
+| Value | Font |
+|-------|------|
+| `bevietnampro` *(default)* | Be Vietnam Pro — optimized for Vietnamese |
+| `notosans` | Noto Sans — maximum Unicode coverage |
+| `lato` | Lato — clean modern sans |
+| `merriweather` | Merriweather — readable serif |
+| `playfair` | Playfair Display — elegant display serif |
+| `roboto` | Roboto — Google's system font |
+| `inter` | Inter — UI-focused sans |
+
+> **Tip:** Individual color params (`bg`, `color`, `accent`, `authorColor`) always override the selected theme.
+
+#### Examples
+
+```
+# Default dark theme
+GET /api/quotes/random/image
+
+# Light theme, larger text, no italic
+GET /api/quotes/random/image?theme=light&fontSize=24&italic=false
+
+# Ocean theme, wider card, Playfair font
+GET /api/quotes/random/image?theme=ocean&font=playfair&width=900
+
+# Sunset theme, custom author color
+GET /api/quotes/random/image?theme=sunset&authorColor=fbbf24
+
+# Fully custom colors, no left border
+GET /api/quotes/random/image?bg=1e1b4b&color=e0e7ff&accent=818cf8&borderWidth=0
+
+# Minimal card, no quote icon
+GET /api/quotes/random/image?theme=mono&showQuoteIcon=false&radius=4
+```
 
 ### Request Body (POST /api/quotes)
 
