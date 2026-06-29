@@ -1,7 +1,37 @@
+# Dependencies
 node_modules
-# Keep environment variables out of version control
+
+# Environment variables
 .env
+.env.local
+.env.*.local
+
+# Build output
 dist
+build
+
+# Generated files
 /generated/prisma
-.*
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Coverage
 coverage
+
+# Test
+*.tsbuildinfo
+
+# Prisma
+prisma/migrations/.migration_lock.toml

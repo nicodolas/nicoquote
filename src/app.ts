@@ -5,6 +5,12 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import quoteRoutes from './routes/quote';
 import { env } from './config/env';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export interface AppOptions {
     rateLimitMax?: number;
@@ -20,7 +26,7 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
     // Security headers
     app.register(helmet);
 
-    // Rate limiting
+    // Rate limiting - applied globally
     app.register(rateLimit, {
         max,
         timeWindow,
@@ -38,11 +44,17 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
             openapi: '3.0.0',
             info: {
                 title: 'NicoQuote API',
-                description: 'API for managing quotes',
+                description: 'API for managing quotes with authentication and rate limiting',
                 version: '1.0.0',
             },
+            servers: [
+                {
+                    url: '/api',
+                },
+            ],
         },
     });
+
     // Swagger UI
     app.register(swaggerUi, {
         routePrefix: '/api/docs',
@@ -50,6 +62,13 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
 
     // Health check
     app.get('/healthz', async () => ({ status: 'ok' }));
+
+    // Landing page - serve static HTML file using ES modules
+    app.get('/', async (_req, reply) => {
+        reply.type('text/html');
+        const htmlPath = path.join(__dirname, 'views', 'index.html');
+        reply.send(fs.readFileSync(htmlPath, 'utf8'));
+    });
 
     // Quote routes
     app.register(quoteRoutes, { prefix: '/api/quotes' });

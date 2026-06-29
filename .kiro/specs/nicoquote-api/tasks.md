@@ -68,11 +68,11 @@ Building a production-ready Vietnamese Quote REST API (nicoquote) with:
 - [ ] 5.1 Setup Swagger at `/api/docs`
   - [x] 5.1.1 Register `@fastify/swagger` and `@fastify/swagger-ui`
   - [x] 5.1.2 Add JSON schema definitions for all route request/response
-- [ ] 5.2 MongoDB indexes (already defined in Prisma schema: `@@index([author])`, `@@index([tags])`)
-  - [~] 5.2.1 Verify indexes exist in Neon after migration
-- [ ] 5.3 Final cleanup
-  - [~] 5.3.1 Run `vitest run --coverage`, ensure ≥80% coverage
-  - [~] 5.3.2 Remove unused imports, dead files, stale tests
+- [x] 5.2 MongoDB indexes (already defined in Prisma schema: `@@index([author])`, `@@index([tags])`)
+  - [x] 5.2.1 Verify indexes exist in Neon after migration
+- [x] 5.3 Final cleanup
+  - [x] 5.3.1 Run `vitest run --coverage`, ensure ≥80% coverage
+  - [x] 5.3.2 Remove unused imports, dead files, stale tests
 
 ## Task Dependency Graph
 

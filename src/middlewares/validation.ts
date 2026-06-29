@@ -1,6 +1,5 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyRequest, FastifyReply } from 'fastify';
 import { z, ZodSchema } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 
 export function validate(schema: ZodSchema) {
     return async (request: FastifyRequest, reply: FastifyReply) => {
@@ -16,12 +15,10 @@ export function validate(schema: ZodSchema) {
         request.body = result.data;
     };
 }
+import { zodToJsonSchema } from 'zod-to-json-schema';
 
-export function zodToJsonSchemaExport(schema: ZodSchema): any {
+export function zodToJsonSchemaExport(schema: any): any {
     const json: any = zodToJsonSchema(schema);
-    // Ensure 'required' is an array (Fastify expects array even if empty)
-    if (!Array.isArray(json.required)) {
-        json.required = [];
-    }
+    json.required = json.required || [];
     return json;
 }
