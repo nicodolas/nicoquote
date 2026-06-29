@@ -2,7 +2,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { apiKeyAuth } from '../middlewares/auth.js';
 import { validate, zodToJsonSchemaExport } from '../middlewares/validation.js';
 import { createQuoteSchema, updateQuoteSchema } from '../modules/quote/schema.js';
-import { quoteService } from '../services/quoteService.js';
+import { QuoteService, quoteService } from '../services/quoteService.js';
 
 const quoteResponseSchema = {
   type: 'object',
@@ -50,11 +50,13 @@ const getQuotesParamsSchema = {
   additionalProperties: false,
 } as const;
 
-const quoteRoutes: FastifyPluginAsync = async (fastify) => {
+export function buildQuoteRoutes(service: QuoteService = quoteService): FastifyPluginAsync {
+  return async (fastify) => {
   // GET /api/quotes — public
   fastify.get(
     '/',
     {
+      config: { rateLimit: { groupId: 'quotes' } },
       schema: {
         querystring: getQuotesQuerySchema,
         response: {
@@ -62,20 +64,45 @@ const quoteRoutes: FastifyPluginAsync = async (fastify) => {
             type: 'array',
             items: quoteResponseSchema,
           },
+          400: errorResponseSchema,
         },
       },
     },
     async (req, reply) => {
+      const allowedQueryKeys = new Set(['author', 'tag', 'limit']);
+      const searchParams = new URL(req.url, 'http://localhost').searchParams;
+      const unexpectedQueryKey = Array.from(searchParams.keys()).find((key) => !allowedQueryKeys.has(key));
+
+      if (unexpectedQueryKey) {
+        return reply.code(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: `Unexpected query parameter: ${unexpectedQueryKey}`,
+        });
+      }
+
       const { author, tag, limit } = req.query as {
         author?: string;
         tag?: string;
         limit?: string;
       };
 
-      const quotes = await quoteService.getAll({
+      const parsedLimit = limit === undefined ? undefined : Number(limit);
+      if (
+        parsedLimit !== undefined &&
+        (!Number.isInteger(parsedLimit) || parsedLimit < 1 || parsedLimit > 100)
+      ) {
+        return reply.code(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: 'limit must be an integer between 1 and 100',
+        });
+      }
+
+      const quotes = await service.getAll({
         author,
         tag,
-        limit: limit ? Number(limit) : undefined,
+        limit: parsedLimit,
       });
 
       return reply.send(quotes);
@@ -86,6 +113,7 @@ const quoteRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get(
     '/random',
     {
+      config: { rateLimit: { groupId: 'quotes' } },
       schema: {
         response: {
           200: quoteResponseSchema,
@@ -94,7 +122,7 @@ const quoteRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (_req, reply) => {
-      const quote = await quoteService.getRandom();
+      const quote = await service.getRandom();
       if (!quote) {
         return reply.code(404).send({
           statusCode: 404,
@@ -110,6 +138,7 @@ const quoteRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get(
     '/:id',
     {
+      config: { rateLimit: { groupId: 'quotes' } },
       schema: {
         params: getQuotesParamsSchema,
         response: {
@@ -120,7 +149,7 @@ const quoteRoutes: FastifyPluginAsync = async (fastify) => {
     },
     async (req, reply) => {
       const { id } = req.params as { id: string };
-      const quote = await quoteService.getById(id);
+      const quote = await service.getById(id);
       if (!quote) {
         return reply.code(404).send({
           statusCode: 404,
@@ -136,9 +165,10 @@ const quoteRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post(
     '/',
     {
+      config: { rateLimit: { groupId: 'quotes' } },
       preHandler: [apiKeyAuth, validate(createQuoteSchema)],
       schema: {
-        body: { ...createQuoteJsonSchema, required: [] },
+        body: createQuoteJsonSchema,
         response: {
           201: quoteResponseSchema,
         },
@@ -150,7 +180,7 @@ const quoteRoutes: FastifyPluginAsync = async (fastify) => {
         author: string;
         tags?: string[];
       };
-      const quote = await quoteService.create(data);
+      const quote = await service.create(data);
       return reply.code(201).send(quote);
     },
   );
@@ -159,10 +189,11 @@ const quoteRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.put(
     '/:id',
     {
+      config: { rateLimit: { groupId: 'quotes' } },
       preHandler: [apiKeyAuth, validate(updateQuoteSchema)],
       schema: {
         params: getQuotesParamsSchema,
-        body: { ...updateQuoteJsonSchema, required: [] },
+        body: updateQuoteJsonSchema,
         response: {
           200: quoteResponseSchema,
           404: errorResponseSchema,
@@ -176,7 +207,7 @@ const quoteRoutes: FastifyPluginAsync = async (fastify) => {
         author?: string;
         tags?: string[];
       };
-      const quote = await quoteService.update(id, data);
+      const quote = await service.update(id, data);
       if (!quote) {
         return reply.code(404).send({
           statusCode: 404,
@@ -192,10 +223,11 @@ const quoteRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.patch(
     '/:id',
     {
+      config: { rateLimit: { groupId: 'quotes' } },
       preHandler: [apiKeyAuth, validate(updateQuoteSchema)],
       schema: {
         params: getQuotesParamsSchema,
-        body: { ...updateQuoteJsonSchema, required: [] },
+        body: updateQuoteJsonSchema,
         response: {
           200: quoteResponseSchema,
           404: errorResponseSchema,
@@ -209,7 +241,7 @@ const quoteRoutes: FastifyPluginAsync = async (fastify) => {
         author?: string;
         tags?: string[];
       };
-      const quote = await quoteService.update(id, data);
+      const quote = await service.update(id, data);
       if (!quote) {
         return reply.code(404).send({
           statusCode: 404,
@@ -225,6 +257,7 @@ const quoteRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete(
     '/:id',
     {
+      config: { rateLimit: { groupId: 'quotes' } },
       preHandler: [apiKeyAuth],
       schema: {
         params: getQuotesParamsSchema,
@@ -236,7 +269,7 @@ const quoteRoutes: FastifyPluginAsync = async (fastify) => {
     },
     async (req, reply) => {
       const { id } = req.params as { id: string };
-      const deleted = await quoteService.delete(id);
+      const deleted = await service.delete(id);
       if (!deleted) {
         return reply.code(404).send({
           statusCode: 404,
@@ -247,6 +280,7 @@ const quoteRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.code(204).send();
     },
   );
-};
+  };
+}
 
-export default quoteRoutes;
+export default buildQuoteRoutes();

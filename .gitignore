@@ -9,7 +9,6 @@ coverage
 # Build output
 dist
 build
-coverage
 # Generated files
 /generated/prisma
 api

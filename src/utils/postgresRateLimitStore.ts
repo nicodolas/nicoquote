@@ -30,8 +30,8 @@ export class PostgresRateLimitStore {
     );
   }
 
-  child(routeOptions: RateLimitOptions): PostgresRateLimitStore {
-    return new PostgresRateLimitStore(routeOptions);
+  child(routeOptions: unknown): PostgresRateLimitStore {
+    return new PostgresRateLimitStore(routeOptions as RateLimitOptions);
   }
 
   private async increment(key: string, timeWindow: number, max: number): Promise<RateLimitResult> {

@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { z, ZodSchema } from 'zod';
+import { ZodSchema } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
 export function validate(schema: ZodSchema) {
@@ -17,8 +17,9 @@ export function validate(schema: ZodSchema) {
     };
 }
 
-export function zodToJsonSchemaExport(schema: any): any {
-    const json: any = zodToJsonSchema(schema);
+export function zodToJsonSchemaExport(schema: ZodSchema): Record<string, unknown> {
+    const convert = zodToJsonSchema as (schema: ZodSchema) => unknown;
+    const json = convert(schema) as Record<string, unknown>;
     json.required = json.required || [];
     return json;
 }

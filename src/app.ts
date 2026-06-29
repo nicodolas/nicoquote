@@ -1,14 +1,16 @@
-import Fastify, { FastifyInstance } from 'fastify';
+import Fastify, { FastifyError, FastifyInstance } from 'fastify';
 import rateLimit from '@fastify/rate-limit';
 import helmet from '@fastify/helmet';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import type { IncomingMessage, ServerResponse } from 'http';
-import quoteRoutes from './routes/quote.js';
+import { buildQuoteRoutes } from './routes/quote.js';
 import { env } from './config/env.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { PostgresRateLimitStore } from './utils/postgresRateLimitStore.js';
+import { QuoteService } from './services/quoteService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -118,10 +120,33 @@ const LANDING_PAGE_HTML = `<!DOCTYPE html>
 export interface AppOptions {
     rateLimitMax?: number;
     rateLimitWindow?: number;
+    quoteService?: QuoteService;
+    rateLimitStore?: new (options?: unknown) => {
+        incr: (...args: unknown[]) => void;
+        child: (routeOptions: unknown) => unknown;
+    };
 }
 
 export function buildApp(options: AppOptions = {}): FastifyInstance {
-    const app = Fastify({ logger: false });
+    const app = Fastify({ logger: false, trustProxy: true });
+
+    app.setErrorHandler((error: FastifyError, _request, reply) => {
+        const statusCode = error.statusCode && error.statusCode >= 400 ? error.statusCode : 500;
+
+        if (statusCode < 500) {
+            return reply.code(statusCode).send({
+                statusCode,
+                error: error.name || 'Error',
+                message: error.message,
+            });
+        }
+
+        return reply.code(500).send({
+            statusCode: 500,
+            error: 'Internal Server Error',
+            message: env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+        });
+    });
 
     const max = options.rateLimitMax ?? env.RATE_LIMIT_REQUESTS;
     const timeWindow = options.rateLimitWindow ?? env.RATE_LIMIT_WINDOW_MS;
@@ -131,8 +156,11 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
 
     // Rate limiting
     app.register(rateLimit, {
+        global: false,
         max,
         timeWindow,
+        store: (options.rateLimitStore ?? PostgresRateLimitStore) as never,
+        keyGenerator: (request) => request.ip,
         addHeaders: {
             'x-ratelimit-limit': true,
             'x-ratelimit-remaining': true,
@@ -182,7 +210,7 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
     app.get('/healthz', async () => ({ status: 'ok' }));
 
     // Quote routes
-    app.register(quoteRoutes, { prefix: '/api/quotes' });
+    app.register(buildQuoteRoutes(options.quoteService), { prefix: '/api/quotes' });
 
     return app;
 }
