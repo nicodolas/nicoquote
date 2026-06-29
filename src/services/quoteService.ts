@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../generated/prisma';
+import { PrismaClient } from '../../generated/prisma/index';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { env } from '../config/env';
 
@@ -26,7 +26,7 @@ export class QuoteService {
 
         const take = Math.min(filters.limit ?? 50, 100);
 
-        return prisma.quote.findMany({ where, take });
+        return prisma.quote.findMany({ where, take, orderBy: { createdAt: 'desc' } });
     }
 
     // 1.1.2 — return null if not found
