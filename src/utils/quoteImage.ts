@@ -223,13 +223,16 @@ export function renderQuoteSVG(opts: QuoteImageOptions): string {
     const contentY = topOffset + fontSize; // baseline of first line
     const authorY = topOffset + contentHeight + authorSize * 1.6;
 
+    // Escape & in the font URL for valid XML embedding inside <style>
+    const importUrlXml = fontDef.importUrl.replace(/&/g, '&amp;');
+
     return `<svg xmlns="http://www.w3.org/2000/svg"
      width="${width}" height="${Math.ceil(totalHeight)}"
      viewBox="0 0 ${width} ${Math.ceil(totalHeight)}">
 
   <defs>
     <style>
-      @import url('${fontDef.importUrl}');
+      @import url('${importUrlXml}');
 
       .q-bg {
         fill: ${bgColor};
