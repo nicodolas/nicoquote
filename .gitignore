@@ -35,3 +35,38 @@ coverage
 
 # Prisma
 prisma/migrations/.migration_lock.toml
+# Essentials (must-haves)
+node_modules/
+.env*.local
+dist/
+build/
+lib/
+*.log
+.DS_Store/
+Thumbs.db/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Generated files
+/generated/
+*.map
+*.bundle.*
+*.chunk.*
+
+# Environment files (partial match)
+.env
+.env.example
+
+# Logs
+npm-debug.log*
+logs/
+*.log
+
+# Build artifacts (full match)
+coverage/
+*.lcov.info
+*.clover.xml
+*.istanbul
+*.coverage
