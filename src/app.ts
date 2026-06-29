@@ -26,7 +26,7 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
     // Security headers
     app.register(helmet);
 
-    // Rate limiting - applied globally
+    // Rate limiting
     app.register(rateLimit, {
         max,
         timeWindow,
@@ -60,15 +60,15 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
         routePrefix: '/api/docs',
     });
 
-    // Health check
-    app.get('/healthz', async () => ({ status: 'ok' }));
-
-    // Landing page - serve static HTML file using ES modules
+    // Landing page - Use fs.readFileSync with import
     app.get('/', async (_req, reply) => {
         reply.type('text/html');
         const htmlPath = path.join(__dirname, 'views', 'index.html');
         reply.send(fs.readFileSync(htmlPath, 'utf8'));
     });
+
+    // Health check
+    app.get('/healthz', async () => ({ status: 'ok' }));
 
     // Quote routes
     app.register(quoteRoutes, { prefix: '/api/quotes' });

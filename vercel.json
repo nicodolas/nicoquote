@@ -1,0 +1,17 @@
+{
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
+    "functions": {
+        "api/**/*.ts": "serverless"
+    },
+    "routes": [
+        {
+            "src": "/api/(.*)",
+            "dest": "/api/$1"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/index.html"
+        }
+    ]
+}
